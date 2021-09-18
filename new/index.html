@@ -5,12 +5,14 @@
 	</head>
 	<body>
       <canvas id="canvas"></canvas>
+      <canvas id="hidden-canvas"></canvas>
       <!-- vertex shader -->
       <script  id="vertex-shader-2d" type="x-shader/x-vertex">
       attribute vec2 a_position;
-
       uniform vec2 u_resolution;
-
+      attribute vec4 colors;
+      varying vec4 varyingColors;
+    
       void main() {
          // convert the rectangle from pixels to 0.0 to 1.0
          vec2 zeroToOne = a_position / u_resolution;
@@ -22,16 +24,17 @@
          vec2 clipSpace = zeroToTwo - 1.0;
 
          gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+         varyingColors = colors;
       }
       </script>
       <!-- fragment shader -->
       <script  id="fragment-shader-2d" type="x-shader/x-fragment">
       precision mediump float;
-
-      uniform vec4 u_color;
+      uniform vec4 color;
+      varying vec4 varyingColors;
 
       void main() {
-         gl_FragColor = u_color;
+         gl_FragColor = varyingColors;
       }
       </script><!--
       for most samples webgl-utils only provides shader compiling/linking and

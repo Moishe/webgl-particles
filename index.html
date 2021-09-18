@@ -9,9 +9,12 @@
 		<script id="shader-fs" type="x-shader/x-fragment">
 			#ifdef GL_ES
 				precision highp float;
-				#endif
+			#endif
+
+			varying vec4 varyingColors;
+
 			void main(void) {
-				gl_FragColor = vec4(0.2, 0.3, 0.4, 1.0);
+				gl_FragColor = varyingColors;
 			}
 		</script>
 		
@@ -21,8 +24,12 @@
 			uniform mat4 modelViewMatrix;
 			uniform mat4 perspectiveMatrix;
 	
+			attribute vec4 colors;
+			varying vec4 varyingColors;
+
 			void main(void) {
-				gl_Position = perspectiveMatrix * modelViewMatrix * vec4(  vertexPosition, 1.0);
+				gl_Position = perspectiveMatrix * modelViewMatrix * vec4(vertexPosition, 1.0);
+				varyingColors = colors;
 			}
 		</script>	
 	</body>

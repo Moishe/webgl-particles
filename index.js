@@ -3,6 +3,7 @@ window.onload = loadScene;
 var canvas, gl,
   ratio,
   vertices,
+  colors,
   velocities,
   freqArr,
   cw,
@@ -23,17 +24,15 @@ drawType = 3;
  * Initialises WebGL and creates the 3D scene.
  */
 function loadScene() {
-  //    Get the canvas element
   canvas = document.getElementById("c");
-  //    Get the WebGL context
+
   gl = canvas.getContext("experimental-webgl");
-  //    Check whether the WebGL context is available or not
-  //    if it's not available exit
+
   if (!gl) {
     alert("There's no WebGL context available.");
     return;
   }
-  //    Set the viewport to the canvas width and height
+
   cw = window.innerWidth;
   ch = window.innerHeight;
   canvas.width = cw;
@@ -125,6 +124,9 @@ function loadScene() {
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
   //    Specify the vertex positions (x, y, z)
 
+  var colorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+
   // ------------------
 
   setup();
@@ -133,6 +135,7 @@ function loadScene() {
 
 
   vertices = new Float32Array(vertices);
+  colors = new Float32Array(colors);
   velocities = new Float32Array(velocities);
 
   thetaArr = new Float32Array(thetaArr);
@@ -155,6 +158,8 @@ function loadScene() {
   //    COPY - The data store contents are modified by reading data from the GL, and used as the source
   //           for GL drawing and image specification commands.
   gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+
+  gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
 
   //    Clear the color buffer and the depth buffer
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -202,6 +207,12 @@ function loadScene() {
   //				alert("color loc : " + colorLoc );
   //     Specify the location and format of the vertex position attribute
   gl.vertexAttribPointer(vertexPosAttribLocation, 3.0, gl.FLOAT, false, 0, 0);
+
+  var colorsLocation = gl.getAttribLocation(gl.program, "colors");
+  gl.vertexAttribPointer(colorsLocation, 4, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(colorsLocation);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
   //gl.vertexAttribPointer(colorLoc, 4.0, gl.FLOAT, false, 0, 0);
   //     Get the location of the "modelViewMatrix" uniform variable from the
   //     shader program
@@ -209,6 +220,9 @@ function loadScene() {
   //     Get the location of the "perspectiveMatrix" uniform variable from the
   //     shader program
   var uPerspectiveMatrix = gl.getUniformLocation(gl.program, "perspectiveMatrix");
+
+  var colorLocation = gl.getUniformLocation(gl.program, "color");
+
   //     Set the values
   gl.uniformMatrix4fv(uModelViewMatrix, false, new Float32Array(perspectiveMatrix));
   gl.uniformMatrix4fv(uPerspectiveMatrix, false, new Float32Array(modelViewMatrix));
@@ -238,6 +252,7 @@ function drawScene() {
 
   gl.lineWidth(1);
   gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+  //gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
 
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -280,6 +295,7 @@ function setup1() {
   velRadArr = [];
   ratio = cw / ch;
   velocities = [];
+  colors = [];
 
   // -------------------------------
 
@@ -291,6 +307,9 @@ function setup1() {
 
     vertices.push(rad * Math.cos(theta), rad * Math.sin(theta), 1.83);//(Math.random() * 2 - 1)*ratio, Math.random() * 2 - 1, 1.83 );
     vertices.push(rad * Math.cos(theta), rad * Math.sin(theta), 1.83);
+
+    colors.push(i / numLines, i / numLines, i / numLines, 1)
+    colors.push(1, 1, 1, 1)
 
     velocities.push((Math.random() * 2 - 1) * .05, (Math.random() * 2 - 1) * .05, .93 + Math.random() * .02);
     velThetaArr.push(velTheta);
@@ -312,6 +331,7 @@ function setup2() {
   thetaArr = [];
   freqArr = [];
   boldRateArr = [];
+  colors = [];
 
   // -------------------------------
 
@@ -326,6 +346,9 @@ function setup2() {
 
     vertices.push(rad * Math.cos(theta), rad * Math.sin(theta), 1.83);
     vertices.push(rad * Math.cos(theta), rad * Math.sin(theta), 1.83);
+
+    colors.push(1, 0, 1, 1);
+    colors.push(1, 0, 1, 1);
 
     thetaArr.push(theta);
     velThetaArr.push(velTheta);
@@ -500,9 +523,11 @@ function draw3() {
     //py *= ( Math.random() -.5);
     vertices[bp + 4] = py;
 
+    /*
     pz = vertices[bp + 5];
     pz = pz + Math.random() * 0.001 - 0.0005;
     vertices[bp + 5] = pz;
+    */
   }
 }
 
@@ -510,7 +535,7 @@ function draw3() {
 
 
 function timer() {
-  //drawType = (drawType + 1) % 3;
+  drawType = (drawType + 1) % 3;
 
   setTimeout(timer, 1500);
 }

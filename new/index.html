@@ -8,14 +8,14 @@
       <canvas id="hidden-canvas"></canvas>
       <!-- vertex shader -->
       <script  id="vertex-shader-2d" type="x-shader/x-vertex">
-      attribute vec2 a_position;
+
+      attribute vec3 a_position;
       uniform vec2 u_resolution;
-      attribute vec4 colors;
       varying vec4 varyingColors;
     
       void main() {
          // convert the rectangle from pixels to 0.0 to 1.0
-         vec2 zeroToOne = a_position / u_resolution;
+         vec2 zeroToOne = a_position.xy / u_resolution;
 
          // convert from 0->1 to 0->2
          vec2 zeroToTwo = zeroToOne * 2.0;
@@ -24,7 +24,7 @@
          vec2 clipSpace = zeroToTwo - 1.0;
 
          gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-         varyingColors = colors;
+         varyingColors = vec4(a_position.z, a_position.z, a_position.z, 1);
       }
       </script>
       <!-- fragment shader -->

@@ -11,17 +11,19 @@ function main() {
   var idx_overwrite = 0;
   var actors = [];
   
-  const initialActors = 10;
-  const maxActors = 50000;
+  const initialActors = 1;
+  const maxActors = 100000;
   const lookDirection = Math.PI / 4;
   const lookMomentum = 0.1;
-  const lookDistance = 2;
+  const lookDistance = 20;
   const maxRgbIncrement = 1;
-  const blurRange = 2;
+  const blurRange = 1;
   const blurInterpolate = 0.01;
-  const initialSpeed = 0.8;
-  const directionWobble = Math.PI / 2;
-  const spawnLikelihoodDivisor = 1;
+  const initialSpeed = 1;
+  const spawnDirectionWobble = Math.PI / 16;
+  const directionWobble = 0;// Math.PI / 2;
+  const spawnLikelihoodDivisor = 2;
+  const repellingValue = 0;
     
     // Get A WebGL context
   /** @type {HTMLCanvasElement} */
@@ -118,7 +120,7 @@ function main() {
     return textureInfo;
   }
 
-  var textureInfo = loadImageAndCreateTextureInfo('first2.jpg');
+  var textureInfo = loadImageAndCreateTextureInfo('first5.jpg');
 
   function draw() {
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
@@ -170,7 +172,7 @@ function main() {
 
     // this matrix will scale our 1 unit quad
     // from 1 unit to texWidth, texHeight units
-    matrix = m4.scale(matrix, texInfo.width, texInfo.height, 1);
+    matrix = m4.scale(matrix, gl.canvas.width, gl.canvas.height, 1);
 
     // Set the matrix.
     gl.uniformMatrix4fv(matrixLocation, false, matrix);
@@ -200,7 +202,7 @@ function main() {
   function spawnNewActor(actor) {
     return {
       'position': [actor['position'][0], actor['position'][1]],
-      'direction': actor['direction'] + Math.PI + Math.random() * directionWobble - (directionWobble / 2.0),
+      'direction': actor['direction'] + Math.random() * spawnDirectionWobble - (spawnDirectionWobble / 2.0),
       'speed': actor['speed'],
       'age': randomInt(10)
     }
@@ -208,8 +210,8 @@ function main() {
 
   function processActors() {
     var new_actors = [];
-    var idx = 0;
-  
+    var deltas = [];
+
     actors.forEach(actor => {
       var new_actor = {
         'position': [],
@@ -225,10 +227,11 @@ function main() {
       } else {
         dr = 0;
       }
-      new_actor['direction'] += dr * lookDirection * lookMomentum;
+      new_actor['direction'] += dr * lookDirection * lookMomentum + (Math.random() * directionWobble - directionWobble/2) * lookMomentum;
 
-      incrementDepositValue(actor['position'], Math.max(lv, mv, rv));
-      blurDepositValue(actor['position']);
+      var currentDepositValue = getDepositValue(actor['position']);
+      
+      deltas.push(actor['position']);
 
       new_actor['position'][0] = actor['position'][0] + new_actor['speed'] * Math.cos(new_actor['direction']);
       new_actor['position'][1] = actor['position'][1] + new_actor['speed'] * Math.sin(new_actor['direction']);
@@ -237,7 +240,7 @@ function main() {
           new_actor['position'][0] < textureInfo.width &&
           new_actor['position'][1] > 1 &&
           new_actor['position'][1] < textureInfo.height &&
-          getDepositValue(actor['position']) < 255 * 3) {
+          currentDepositValue < 255 * 3) {
         new_actors.push(new_actor);
       } /*else {
         if (actors.length < maxActors) {
@@ -252,6 +255,14 @@ function main() {
     })
   
     actors = new_actors;
+
+    deltas.forEach(delta => {
+      incrementDepositValue(delta);
+    });
+
+    deltas.forEach(delta => {
+      blurDepositValue(delta);
+    })
   }
 
   function getMoveCoords(actor, distance, direction) {
@@ -286,7 +297,7 @@ function main() {
     return 1 + randomInt(maxRgbIncrement - 1);
   }
   
-  function incrementDepositValue(coords, amount) {
+  function incrementDepositValue(coords) {
     var texture_idx = textureIdxFromCoords(coords);
     for (var i = 0; i < 3; i++) {
       textureData[texture_idx + i] = Math.min(255, textureData[texture_idx + i] + incRgbValue(i));
@@ -294,6 +305,9 @@ function main() {
   }  
 
   function blurDepositValue(coords) {
+    if (blurRange == 0) {
+      return;
+    }
     var average = [0,0,0];
     var values = [];
 
